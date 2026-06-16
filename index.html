@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surbhi — Library of Knowledge</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0a0b1e;--deep:#07081a;--violet:#7c3aed;
+  --gold:#f59e0b;--gold2:#fbbf24;--light:#e2e8f0;--muted:#94a3b8;
+  --card:#0f1035;--border:#1e2a5a;
+}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--navy);color:var(--light);font-family:'Georgia',serif;overflow-x:hidden}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;background:rgba(7,8,26,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(30,42,90,0.4)}
+.nav-logo{font-size:1.1rem;color:var(--gold2);letter-spacing:0.15em;cursor:pointer}
+.nav-links{display:flex;gap:1.8rem;list-style:none}
+.nav-links a{font-family:sans-serif;font-size:0.75rem;color:var(--muted);text-decoration:none;letter-spacing:0.15em;text-transform:uppercase;transition:color 0.3s;position:relative;padding-bottom:2px}
+.nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--gold);transition:width 0.3s}
+.nav-links a:hover,.nav-links a.active{color:var(--gold2)}
+.nav-links a:hover::after,.nav-links a.active::after{width:100%}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:1.5px;background:var(--gold2);transition:all 0.3s}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+.mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:rgba(7,8,26,0.98);z-index:199;padding:1.5rem 2rem;border-bottom:1px solid var(--border);flex-direction:column;gap:1.2rem}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-family:sans-serif;font-size:0.9rem;color:var(--muted);text-decoration:none;letter-spacing:0.2em;text-transform:uppercase;padding:0.5rem 0;border-bottom:1px solid rgba(30,42,90,0.3)}
+.mobile-menu a:hover{color:var(--gold2)}
+
+/* HERO */
+#hero{position:relative;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#three-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:10;text-align:center;pointer-events:none}
+.hero-name{font-size:clamp(3.5rem,9vw,7rem);font-weight:400;letter-spacing:0.06em;color:#fff;text-shadow:0 0 40px rgba(139,92,246,0.9),0 0 100px rgba(139,92,246,0.3);animation:fadeInUp 1.4s ease forwards;opacity:0}
+.hero-role{font-size:clamp(0.85rem,1.8vw,1.2rem);color:var(--gold2);letter-spacing:0.35em;text-transform:uppercase;margin-top:0.6rem;animation:fadeInUp 1.4s 0.35s ease forwards;opacity:0;font-family:sans-serif;min-height:1.5em}
+.hero-sub{font-size:clamp(0.75rem,1.4vw,0.95rem);color:var(--muted);margin-top:0.4rem;letter-spacing:0.2em;animation:fadeInUp 1.4s 0.7s ease forwards;opacity:0;font-family:sans-serif}
+.hero-btns{display:flex;gap:1rem;justify-content:center;margin-top:2.5rem;animation:fadeInUp 1.4s 1s ease forwards;opacity:0;pointer-events:all;flex-wrap:wrap}
+.btn-primary{padding:0.9rem 2.2rem;background:transparent;border:1px solid var(--gold);color:var(--gold2);font-family:sans-serif;font-size:0.85rem;letter-spacing:0.2em;cursor:pointer;transition:all 0.35s;position:relative;overflow:hidden}
+.btn-primary::before{content:'';position:absolute;inset:0;background:rgba(245,158,11,0.12);transform:translateX(-100%);transition:transform 0.4s}
+.btn-primary:hover::before{transform:translateX(0)}
+.btn-primary:hover{box-shadow:0 0 30px rgba(245,158,11,0.35);text-shadow:0 0 8px rgba(251,191,36,0.7)}
+.btn-secondary{padding:0.9rem 2.2rem;background:transparent;border:1px solid rgba(124,58,237,0.5);color:#c4b5fd;font-family:sans-serif;font-size:0.85rem;letter-spacing:0.2em;cursor:pointer;transition:all 0.35s}
+.btn-secondary:hover{background:rgba(124,58,237,0.15);box-shadow:0 0 25px rgba(124,58,237,0.3);border-color:rgba(124,58,237,0.8)}
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);z-index:10;color:var(--muted);font-family:sans-serif;font-size:0.7rem;letter-spacing:0.25em;animation:bounce 2.5s ease-in-out infinite;display:flex;flex-direction:column;align-items:center;gap:0.4rem}
+.scroll-arrow{width:1px;height:30px;background:linear-gradient(to bottom,transparent,var(--gold));animation:scrollPulse 2.5s ease-in-out infinite}
+
+/* RUNE DIVIDER */
+.rune-divider{text-align:center;padding:2rem 0;font-size:1rem;color:rgba(124,58,237,0.4);letter-spacing:1rem;user-select:none}
+
+/* SECTIONS */
+.section{padding:5rem 1.5rem;max-width:1100px;margin:0 auto}
+.section-label{font-family:sans-serif;font-size:0.65rem;letter-spacing:0.45em;color:var(--gold);text-transform:uppercase;margin-bottom:0.8rem;display:flex;align-items:center;gap:1rem}
+.section-label::before,.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,var(--border))}
+.section-title{font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:2rem;color:#fff;text-shadow:0 0 20px rgba(139,92,246,0.25)}
+
+/* ABOUT */
+#about{background:linear-gradient(to bottom,var(--navy),var(--deep))}
+.about-inner{display:grid;grid-template-columns:1fr 2fr;gap:4rem;align-items:center}
+@media(max-width:720px){.about-inner{grid-template-columns:1fr;text-align:center}}
+
+/* PHOTO */
+.photo-frame{position:relative;width:220px;height:220px;margin:0 auto}
+.photo-outer-ring{position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(245,158,11,0.25);animation:portalSpin 12s linear infinite}
+.photo-outer-ring::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px dashed rgba(124,58,237,0.2);animation:portalSpin 8s linear infinite reverse}
+.photo-glow{position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,0.25),transparent 70%);animation:glowPulse 3s ease-in-out infinite}
+.photo-circle{width:220px;height:220px;border-radius:50%;overflow:hidden;border:2px solid rgba(124,58,237,0.4);position:relative;z-index:2;background:var(--card);display:flex;align-items:center;justify-content:center}
+.photo-circle img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:0.5rem;color:var(--muted);font-family:sans-serif;font-size:0.75rem;letter-spacing:0.1em;text-align:center;padding:1rem}
+.photo-placeholder .upload-icon{font-size:2.5rem;opacity:0.4}
+.photo-upload-btn{margin-top:0.8rem;padding:0.4rem 1rem;background:transparent;border:1px solid rgba(124,58,237,0.4);color:#c4b5fd;font-family:sans-serif;font-size:0.75rem;letter-spacing:0.15em;cursor:pointer;transition:all 0.3s;border-radius:2px}
+.photo-upload-btn:hover{background:rgba(124,58,237,0.2)}
+#photo-input{display:none}
+
+.parchment{background:linear-gradient(135deg,rgba(15,16,53,0.9),rgba(20,15,60,0.85));border:1px solid rgba(245,158,11,0.18);padding:2.5rem;position:relative;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));box-shadow:0 0 50px rgba(124,58,237,0.1)}
+.parchment::before{content:'✦';position:absolute;top:1rem;right:1.4rem;color:var(--gold);opacity:0.4;font-size:1rem}
+.parchment p{color:var(--light);line-height:2;font-size:1.05rem}
+.rune-row{display:flex;gap:0.8rem;margin-top:1.8rem;flex-wrap:wrap}
+.rune{background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);padding:0.4rem 1rem;font-family:sans-serif;font-size:0.75rem;color:#a78bfa;letter-spacing:0.12em;transition:all 0.3s;cursor:default}
+.rune:hover{background:rgba(124,58,237,0.2);box-shadow:0 0 15px rgba(124,58,237,0.35);color:#c4b5fd}
+
+/* SKILLS */
+#skills{background:var(--deep)}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.8rem;margin-top:1rem}
+.skill-category{background:rgba(10,11,30,0.7);border:1px solid var(--border);padding:2rem;position:relative;overflow:hidden;transition:all 0.4s;cursor:default}
+.skill-category::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--violet),transparent);opacity:0;transition:opacity 0.4s}
+.skill-category:hover::before{opacity:1}
+.skill-category:hover{border-color:rgba(124,58,237,0.45);box-shadow:0 0 40px rgba(124,58,237,0.08);transform:translateY(-5px)}
+.cat-icon{font-size:1.8rem;margin-bottom:0.6rem;display:block}
+.cat-title{font-family:sans-serif;font-size:0.65rem;letter-spacing:0.3em;color:var(--gold);text-transform:uppercase;margin-bottom:1.4rem}
+.skill-item{margin-bottom:1rem}
+.skill-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem}
+.skill-name{font-family:sans-serif;font-size:0.82rem;color:#c4b5fd;letter-spacing:0.05em}
+.skill-pct{font-family:sans-serif;font-size:0.72rem;color:var(--muted)}
+.skill-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.skill-fill{height:100%;background:linear-gradient(to right,var(--violet),var(--gold));border-radius:2px;width:0;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+
+/* PROJECTS */
+#projects{background:linear-gradient(to bottom,var(--deep),var(--navy))}
+.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:2rem;margin-top:1rem}
+.book-card{background:var(--card);border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;transition:all 0.45s;display:flex;flex-direction:column}
+.book-spine{height:5px;width:100%}
+.book-badge{position:absolute;top:1.2rem;right:1.2rem;font-family:sans-serif;font-size:0.6rem;letter-spacing:0.2em;padding:0.25rem 0.7rem;border:1px solid rgba(245,158,11,0.3);color:var(--gold2);background:rgba(245,158,11,0.07);text-transform:uppercase}
+.book-cover{padding:2rem;flex:1}
+.book-num{font-size:0.65rem;font-family:sans-serif;color:var(--gold);letter-spacing:0.35em;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.5rem}
+.book-num::before{content:'📖';font-size:0.9rem}
+.book-title{font-size:1.3rem;color:#fff;margin-bottom:0.6rem;line-height:1.35}
+.book-desc{font-size:0.85rem;color:var(--muted);line-height:1.8;font-family:sans-serif;margin-bottom:1.2rem}
+.tech-tags{display:flex;flex-wrap:wrap;gap:0.35rem}
+.tech-tag{font-size:0.65rem;font-family:sans-serif;padding:0.2rem 0.55rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.18);color:#fbbf24}
+.book-footer{padding:1rem 2rem;border-top:1px solid var(--border);display:flex;gap:1.5rem}
+.book-link{font-family:sans-serif;font-size:0.78rem;color:#a78bfa;letter-spacing:0.08em;text-decoration:none;transition:color 0.3s;display:flex;align-items:center;gap:0.4rem}
+.book-link:hover{color:#c4b5fd}
+.book-card:hover{border-color:rgba(124,58,237,0.45);box-shadow:0 20px 60px rgba(124,58,237,0.12),0 0 0 1px rgba(124,58,237,0.08);transform:translateY(-8px)}
+.book-hover-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(124,58,237,0.08),transparent 70%);opacity:0;transition:opacity 0.4s;pointer-events:none}
+.book-card:hover .book-hover-glow{opacity:1}
+
+/* ACHIEVEMENTS */
+#achievements{background:var(--deep)}
+.trophy-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.5rem;margin-top:1rem}
+.trophy-card{background:rgba(10,11,30,0.6);border:1px solid rgba(245,158,11,0.12);padding:2rem;text-align:center;position:relative;overflow:hidden;transition:all 0.4s;opacity:0;transform:translateY(20px)}
+.trophy-card.visible{opacity:1;transform:translateY(0);transition:all 0.6s}
+.trophy-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(245,158,11,0.06),transparent 70%);opacity:0;transition:opacity 0.3s}
+.trophy-card:hover::after{opacity:1}
+.trophy-card:hover{border-color:rgba(245,158,11,0.35);box-shadow:0 0 40px rgba(245,158,11,0.08);transform:translateY(-5px)}
+.trophy-icon{font-size:2.8rem;margin-bottom:1rem;display:block}
+.trophy-title{font-size:0.95rem;color:#fff;margin-bottom:0.5rem;letter-spacing:0.05em}
+.trophy-desc{font-size:0.82rem;color:var(--muted);font-family:sans-serif;line-height:1.7}
+
+/* JOURNEY */
+#journey{background:var(--navy)}
+.timeline{position:relative;margin-top:1rem;padding-left:2rem}
+.timeline::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,var(--violet) 20%,var(--gold) 80%,transparent)}
+.milestone{position:relative;padding:0 0 2.5rem 2.5rem;opacity:0;transform:translateX(-24px);transition:all 0.7s cubic-bezier(0.4,0,0.2,1)}
+.milestone.visible{opacity:1;transform:translateX(0)}
+.milestone::before{content:'';position:absolute;left:-5px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--violet);box-shadow:0 0 12px rgba(139,92,246,0.7),0 0 24px rgba(139,92,246,0.3)}
+.milestone-year{font-family:sans-serif;font-size:0.65rem;letter-spacing:0.25em;color:var(--gold);margin-bottom:0.3rem;text-transform:uppercase}
+.milestone-title{font-size:1.05rem;color:#fff;margin-bottom:0.3rem;letter-spacing:0.02em}
+.milestone-desc{font-size:0.82rem;color:var(--muted);font-family:sans-serif;line-height:1.7}
+
+/* CONTACT */
+#contact{background:linear-gradient(to bottom,var(--deep),var(--navy))}
+.portal-ring{width:160px;height:160px;border-radius:50%;border:1.5px solid rgba(124,58,237,0.35);position:relative;margin:0 auto 3.5rem;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(124,58,237,0.15),inset 0 0 40px rgba(124,58,237,0.08);animation:portalSpin 10s linear infinite}
+.portal-ring::before{content:'';position:absolute;inset:-10px;border-radius:50%;border:1px dashed rgba(245,158,11,0.18);animation:portalSpin 15s linear infinite reverse}
+.portal-ring::after{content:'✦';font-size:1.8rem;color:var(--gold);text-shadow:0 0 20px rgba(245,158,11,0.7)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
+@media(max-width:640px){.contact-grid{grid-template-columns:1fr}}
+.contact-links{display:flex;flex-direction:column;gap:0.8rem}
+.contact-link{display:flex;align-items:center;gap:1rem;padding:0.9rem 1.4rem;background:rgba(10,11,30,0.6);border:1px solid var(--border);color:var(--light);text-decoration:none;font-family:sans-serif;font-size:0.85rem;transition:all 0.3s;letter-spacing:0.05em}
+.contact-link:hover{border-color:rgba(124,58,237,0.45);background:rgba(124,58,237,0.08);color:#c4b5fd;transform:translateX(6px)}
+.contact-icon{font-size:1rem;width:1.2rem;text-align:center;opacity:0.8}
+.contact-form{display:flex;flex-direction:column;gap:0.9rem}
+.form-field{background:rgba(7,8,26,0.8);border:1px solid var(--border);color:var(--light);padding:0.85rem 1.1rem;font-family:sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.3s;width:100%}
+.form-field:focus{border-color:rgba(124,58,237,0.5);box-shadow:0 0 15px rgba(124,58,237,0.08)}
+.form-field::placeholder{color:var(--muted)}
+textarea.form-field{resize:vertical;min-height:110px}
+.send-btn{background:transparent;border:1px solid var(--violet);color:#c4b5fd;padding:0.85rem 2rem;font-family:sans-serif;font-size:0.82rem;letter-spacing:0.2em;cursor:pointer;transition:all 0.35s;text-transform:uppercase}
+.send-btn:hover{background:rgba(124,58,237,0.18);box-shadow:0 0 25px rgba(124,58,237,0.25)}
+.success-msg{text-align:center;color:var(--gold2);font-family:sans-serif;font-size:0.85rem;padding:0.9rem;border:1px solid rgba(245,158,11,0.25);background:rgba(245,158,11,0.05);display:none;animation:fadeInUp 0.6s ease}
+
+/* FOOTER */
+footer{text-align:center;padding:3rem 1.5rem;border-top:1px solid var(--border)}
+.footer-socials{display:flex;justify-content:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.footer-social{font-family:sans-serif;font-size:0.75rem;color:var(--muted);text-decoration:none;letter-spacing:0.15em;text-transform:uppercase;transition:color 0.3s;padding:0.4rem 0.8rem;border:1px solid transparent}
+.footer-social:hover{color:var(--gold2);border-color:rgba(245,158,11,0.2)}
+.footer-copy{font-family:sans-serif;font-size:0.75rem;color:rgba(148,163,184,0.4);letter-spacing:0.15em}
+.footer-made{font-family:sans-serif;font-size:0.65rem;color:rgba(148,163,184,0.25);letter-spacing:0.1em;margin-top:0.4rem}
+
+/* PARTICLES BG */
+#particles-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;pointer-events:none}
+
+/* BACK TO TOP */
+.back-top{position:fixed;bottom:2rem;right:2rem;z-index:150;width:42px;height:42px;border:1px solid rgba(124,58,237,0.4);background:rgba(7,8,26,0.8);color:#a78bfa;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;opacity:0;transform:translateY(10px)}
+.back-top.show{opacity:1;transform:translateY(0)}
+.back-top:hover{border-color:rgba(124,58,237,0.8);box-shadow:0 0 20px rgba(124,58,237,0.25)}
+
+/* KEYFRAMES */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+@keyframes portalSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes glowPulse{0%,100%{opacity:0.6}50%{opacity:1}}
+@keyframes scrollPulse{0%,100%{opacity:0.3;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.15)}}
+@keyframes particleDrift{0%{transform:translateY(100vh) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:0.8}100%{transform:translateY(-10vh) rotate(720deg);opacity:0}}
+@keyframes typeCursor{0%,100%{opacity:1}50%{opacity:0}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .section{padding:3.5rem 1.2rem}
+  .about-inner{gap:2rem}
+  .photo-frame{width:180px;height:180px}
+  .photo-circle{width:180px;height:180px}
+}
+@media(max-width:480px){
+  .skills-grid{grid-template-columns:1fr}
+  .bookshelf{grid-template-columns:1fr}
+  .trophy-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Ambient particles -->
+<div id="particles-bg"></div>
+
+<!-- Back to top -->
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">✦ Surbhi</div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#achievements">Achievements</a></li>
+    <li><a href="#journey">Journey</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#about" onclick="closeMenu()">About</a>
+  <a href="#skills" onclick="closeMenu()">Skills</a>
+  <a href="#projects" onclick="closeMenu()">Projects</a>
+  <a href="#achievements" onclick="closeMenu()">Achievements</a>
+  <a href="#journey" onclick="closeMenu()">Journey</a>
+  <a href="#contact" onclick="closeMenu()">Contact</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="three-canvas"></canvas>
+  <div class="hero-content">
+    <h1 class="hero-name">Surbhi</h1>
+    <p class="hero-role" id="typingText"></p>
+    <p class="hero-sub">Information Technology Student</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">✦ Enter the Library</button>
+      <button class="btn-secondary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Open a Channel</button>
+    </div>
+  </div>
+  <div class="scroll-hint" style="position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+    <span style="font-family:sans-serif;font-size:0.65rem;letter-spacing:0.3em;color:var(--muted)">SCROLL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<div class="rune-divider">✦ ✧ ✦ ✧ ✦</div>
+
+<!-- ABOUT -->
+<section id="about" style="background:linear-gradient(to bottom,var(--navy),var(--deep))">
+  <div class="section">
+    <div class="section-label">The Scholar's Scroll</div>
+    <h2 class="section-title">My Story</h2>
+    <div class="about-inner">
+      <!-- PHOTO COLUMN -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1.5rem">
+        <div class="photo-frame">
+          <div class="photo-glow"></div>
+          <div class="photo-outer-ring"></div>
+          <div class="photo-circle" id="photoCircle">
+            <div class="photo-placeholder" id="photoPlaceholder">
+              <span class="upload-icon">🧙‍♀️</span>
+              <span>Add your photo</span>
+              <button class="photo-upload-btn" onclick="document.getElementById('photo-input').click()">Upload Image</button>
+            </div>
+            <img id="photoImg" src="" alt="Surbhi" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
+          </div>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(event)">
+        <div style="text-align:center">
+          <div style="font-size:1.3rem;color:#fff;letter-spacing:0.05em;margin-bottom:0.3rem">Surbhi</div>
+          <div style="font-family:sans-serif;font-size:0.75rem;color:var(--gold);letter-spacing:0.2em;text-transform:uppercase">IT Student · Developer</div>
+        </div>
+      </div>
+      <!-- TEXT COLUMN -->
+      <div>
+        <div class="parchment">
+          <p>I am <strong style="color:var(--gold2)">Surbhi</strong>, an Information Technology student passionate about problem solving, software engineering, competitive programming, and full stack development.</p>
+          <br>
+          <p>I enjoy building impactful products, solving algorithmic challenges, and continuously learning new technologies. Every project is a new chapter — every algorithm, a new spell in the tome of knowledge.</p>
+          <div class="rune-row">
+            <span class="rune">Problem Solver</span>
+            <span class="rune">Builder</span>
+            <span class="rune">CP Enthusiast</span>
+            <span class="rune">IT Student</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rune-divider">✦ ✧ ✦ ✧ ✦</div>
+
+<!-- SKILLS -->
+<section id="skills" style="background:var(--deep)">
+  <div class="section">
+    <div class="section-label">The Artifact Chamber</div>
+    <h2 class="section-title">Magical Skills</h2>
+    <div class="skills-grid">
+      <div class="skill-category">
+        <span class="cat-icon">⚗️</span>
+        <div class="cat-title">Programming Languages</div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">C++</span><span class="skill-pct">90%</span></div><div class="skill-bar"><div class="skill-fill" data-w="90"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">JavaScript</span><span class="skill-pct">85%</span></div><div class="skill-bar"><div class="skill-fill" data-w="85"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">TypeScript</span><span class="skill-pct">75%</span></div><div class="skill-bar"><div class="skill-fill" data-w="75"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">SQL</span><span class="skill-pct">80%</span></div><div class="skill-bar"><div class="skill-fill" data-w="80"></div></div></div>
+      </div>
+      <div class="skill-category">
+        <span class="cat-icon">🏛️</span>
+        <div class="cat-title">Frontend Scrolls</div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">React</span><span class="skill-pct">88%</span></div><div class="skill-bar"><div class="skill-fill" data-w="88"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">HTML & CSS</span><span class="skill-pct">92%</span></div><div class="skill-bar"><div class="skill-fill" data-w="92"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Tailwind CSS</span><span class="skill-pct">80%</span></div><div class="skill-bar"><div class="skill-fill" data-w="80"></div></div></div>
+      </div>
+      <div class="skill-category">
+        <span class="cat-icon">🔮</span>
+        <div class="cat-title">Backend Runes</div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Node.js</span><span class="skill-pct">82%</span></div><div class="skill-bar"><div class="skill-fill" data-w="82"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Express.js</span><span class="skill-pct">78%</span></div><div class="skill-bar"><div class="skill-fill" data-w="78"></div></div></div>
+      </div>
+      <div class="skill-category">
+        <span class="cat-icon">📜</span>
+        <div class="cat-title">Database Vaults</div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">MySQL</span><span class="skill-pct">80%</span></div><div class="skill-bar"><div class="skill-fill" data-w="80"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">MongoDB</span><span class="skill-pct">72%</span></div><div class="skill-bar"><div class="skill-fill" data-w="72"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Prisma</span><span class="skill-pct">75%</span></div><div class="skill-bar"><div class="skill-fill" data-w="75"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rune-divider">✦ ✧ ✦ ✧ ✦</div>
+
+<!-- PROJECTS -->
+<section id="projects" style="background:linear-gradient(to bottom,var(--deep),var(--navy))">
+  <div class="section">
+    <div class="section-label">The Great Bookshelf</div>
+    <h2 class="section-title">Enchanted Projects</h2>
+    <div class="bookshelf">
+      <div class="book-card reveal">
+        <div class="book-hover-glow"></div>
+        <div class="book-spine" style="background:linear-gradient(to right,#7c3aed,#f59e0b)"></div>
+        <div class="book-badge">Full Stack</div>
+        <div class="book-cover">
+          <div class="book-num">Volume I</div>
+          <h3 class="book-title">Book Sorting Website</h3>
+          <p class="book-desc">A full stack web application allowing users to browse books by genre and search books efficiently. Combines intuitive UI with powerful backend filtering and MySQL database integration.</p>
+          <div class="tech-tags">
+            <span class="tech-tag">React</span><span class="tech-tag">Node.js</span><span class="tech-tag">Express</span><span class="tech-tag">MySQL</span>
+          </div>
+        </div>
+        <div class="book-footer">
+          <a href="https://github.com" target="_blank" class="book-link">⌥ GitHub</a>
+          <a href="#" class="book-link">⊞ Live Demo</a>
+        </div>
+      </div>
+      <div class="book-card reveal">
+        <div class="book-hover-glow"></div>
+        <div class="book-spine" style="background:linear-gradient(to right,#0ea5e9,#8b5cf6)"></div>
+        <div class="book-badge">Featured</div>
+        <div class="book-cover">
+          <div class="book-num">Volume II</div>
+          <h3 class="book-title">E-Commerce Platform</h3>
+          <p class="book-desc">A modern online shopping platform with authentication, product management, and cart functionality. Built for scale and performance using Prisma ORM with SQL database.</p>
+          <div class="tech-tags">
+            <span class="tech-tag">React</span><span class="tech-tag">Node.js</span><span class="tech-tag">Prisma</span><span class="tech-tag">SQL</span>
+          </div>
+        </div>
+        <div class="book-footer">
+          <a href="https://github.com" target="_blank" class="book-link">⌥ GitHub</a>
+          <a href="#" class="book-link">⊞ Live Demo</a>
+        </div>
+      </div>
+      <div class="book-card reveal">
+        <div class="book-hover-glow"></div>
+        <div class="book-spine" style="background:linear-gradient(to right,#10b981,#f59e0b)"></div>
+        <div class="book-badge">CP Tools</div>
+        <div class="book-cover">
+          <div class="book-num">Volume III</div>
+          <h3 class="book-title">CP Toolkit</h3>
+          <p class="book-desc">A collection of algorithm visualizers and problem solving utilities. Watch sorting, graph traversal, and dynamic programming algorithms come to life with animated visuals.</p>
+          <div class="tech-tags">
+            <span class="tech-tag">React</span><span class="tech-tag">JavaScript</span>
+          </div>
+        </div>
+        <div class="book-footer">
+          <a href="https://github.com" target="_blank" class="book-link">⌥ GitHub</a>
+          <a href="#" class="book-link">⊞ Live Demo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rune-divider">✦ ✧ ✦ ✧ ✦</div>
+
+<!-- ACHIEVEMENTS -->
+<section id="achievements" style="background:var(--deep)">
+  <div class="section">
+    <div class="section-label">Hall of Trophies</div>
+    <h2 class="section-title">Achievements Unlocked</h2>
+    <div class="trophy-grid">
+      <div class="trophy-card"><span class="trophy-icon">🏆</span><h3 class="trophy-title">DSA Mastery</h3><p class="trophy-desc">Proficiency in Data Structures & Algorithms — arrays, trees, graphs, dynamic programming.</p></div>
+      <div class="trophy-card"><span class="trophy-icon">⚔️</span><h3 class="trophy-title">Competitive Programming</h3><p class="trophy-desc">Active participant in CP contests, solving complex algorithmic challenges under pressure.</p></div>
+      <div class="trophy-card"><span class="trophy-icon">📚</span><h3 class="trophy-title">Academic Excellence</h3><p class="trophy-desc">Consistent performance in the IT program, blending theory with practical application.</p></div>
+      <div class="trophy-card"><span class="trophy-icon">🛡️</span><h3 class="trophy-title">Full Stack Builder</h3><p class="trophy-desc">Demonstrated expertise across the full stack — pixel-perfect UIs to robust backends.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="rune-divider">✦ ✧ ✦ ✧ ✦</div>
+
+<!-- JOURNEY -->
+<section id="journey" style="background:var(--navy)">
+  <div class="section">
+    <div class="section-label">The Journey Tome</div>
+    <h2 class="section-title">Developer's Path</h2>
+    <div class="timeline">
+      <div class="milestone"><div class="milestone-year">Chapter I</div><div class="milestone-title">First Spell Cast — Started Programming</div><div class="milestone-desc">Began the journey into the world of code and logic, writing first programs.</div></div>
+      <div class="milestone"><div class="milestone-year">Chapter II</div><div class="milestone-title">The Visual Arts — HTML & CSS</div><div class="milestone-desc">Learned to craft beautiful, structured web pages and bring designs to life.</div></div>
+      <div class="milestone"><div class="milestone-year">Chapter III</div><div class="milestone-title">The Language of Magic — JavaScript</div><div class="milestone-desc">Mastered the art of interactivity and dynamic web experiences.</div></div>
+      <div class="milestone"><div class="milestone-year">Chapter IV</div><div class="milestone-title">The React Grimoire</div><div class="milestone-desc">Discovered the power of component-based UI and modern frontend development.</div></div>
+      <div class="milestone"><div class="milestone-year">Chapter V</div><div class="milestone-title">Algorithmic Arcana — DSA</div><div class="milestone-desc">Entered the realm of data structures and algorithms, unlocking new problem-solving power.</div></div>
+      <div class="milestone"><div class="milestone-year">Chapter VI</div><div class="milestone-title">Building the Kingdom — Full Stack Projects</div><div class="milestone-desc">Combined frontend and backend knowledge to build complete, production-ready applications.</div></div>
+      <div class="milestone"><div class="milestone-year">Chapter VII</div><div class="milestone-title">The Grand Quest — Internship Preparation</div><div class="milestone-desc">Sharpening all skills, building portfolio, and preparing for the next great adventure.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="rune-divider">✦ ✧ ✦ ✧ ✦</div>
+
+<!-- CONTACT -->
+<section id="contact" style="background:linear-gradient(to bottom,var(--deep),var(--navy))">
+  <div class="section">
+    <div class="section-label">The Sending Portal</div>
+    <h2 class="section-title">Open a Channel</h2>
+    <div class="portal-ring"></div>
+    <div class="contact-grid">
+      <div>
+        <p style="font-family:sans-serif;font-size:0.85rem;color:var(--muted);line-height:1.8;margin-bottom:1.5rem">Have a project in mind, want to collaborate, or just want to say hello? Open a portal — I reply to every message.</p>
+        <div class="contact-links">
+          <a href="mailto:surbhi@example.com" class="contact-link"><span class="contact-icon">✉</span> surbhi@example.com</a>
+          <a href="https://github.com/surbhi" target="_blank" class="contact-link"><span class="contact-icon">⌥</span> github.com/surbhi</a>
+          <a href="https://linkedin.com/in/surbhi" target="_blank" class="contact-link"><span class="contact-icon">⊞</span> linkedin.com/in/surbhi</a>
+          <a href="#" class="contact-link" style="color:var(--gold2);border-color:rgba(245,158,11,0.25)"><span class="contact-icon">📜</span> Download Resume</a>
+        </div>
+      </div>
+      <div>
+        <div class="contact-form" id="contactForm">
+          <input class="form-field" type="text" placeholder="Your Name" id="fname">
+          <input class="form-field" type="email" placeholder="Your Email" id="femail">
+          <textarea class="form-field" placeholder="Your Message" id="fmsg"></textarea>
+          <button class="send-btn" onclick="submitForm()">✦ Send Message ✦</button>
+          <div class="success-msg" id="successMsg">✨ Message sent into the ether! Surbhi will reply soon. ✨</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-socials">
+    <a href="mailto:surbhi@example.com" class="footer-social">Email</a>
+    <a href="https://github.com/surbhi" target="_blank" class="footer-social">GitHub</a>
+    <a href="https://linkedin.com/in/surbhi" target="_blank" class="footer-social">LinkedIn</a>
+    <a href="#" class="footer-social" style="color:var(--gold2)">Resume</a>
+  </div>
+  <div class="footer-copy">✦ &nbsp; Surbhi &nbsp; · &nbsp; Library of Knowledge &nbsp; ✦</div>
+  <div class="footer-made">Crafted with magic & code</div>
+</footer>
+
+<script>
+/* ===== THREE.JS LIBRARY SCENE ===== */
+(function(){
+  const canvas=document.getElementById('three-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setClearColor(0x0a0b1e,1);
+  const scene=new THREE.Scene();
+  scene.fog=new THREE.Fog(0x0a0b1e,18,55);
+  const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,100);
+  camera.position.set(0,2,12);
+  scene.add(new THREE.AmbientLight(0x1a1040,0.9));
+  const pL=new THREE.PointLight(0x7c3aed,3,22); pL.position.set(-5,5,2); scene.add(pL);
+  const gL=new THREE.PointLight(0xf59e0b,2,16); gL.position.set(5,4,2); scene.add(gL);
+  scene.add(new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshLambertMaterial({color:0x050610})));
+  const floor=scene.children[scene.children.length-1]; floor.rotation.x=-Math.PI/2; floor.position.y=-0.5;
+
+  function makeShelf(x){
+    const g=new THREE.Group(),fm=new THREE.MeshLambertMaterial({color:0x120808});
+    [-1.6,1.6].forEach(sx=>{const s=new THREE.Mesh(new THREE.BoxGeometry(0.1,8,0.5),fm);s.position.set(sx,4,0);g.add(s);});
+    for(let i=0;i<5;i++){const s=new THREE.Mesh(new THREE.BoxGeometry(3.4,0.07,0.5),fm);s.position.set(0,i*1.5+0.5,0);g.add(s);}
+    const bc=[0x8b1a1a,0x1a4a8b,0x1a8b3a,0x8b6a1a,0x6a1a8b,0x1a7a8b];
+    for(let r=0;r<4;r++){let bx=-1.4;while(bx<1.4){const w=0.08+Math.random()*0.13,h=0.9+Math.random()*0.45,c=bc[Math.floor(Math.random()*bc.length)];const bk=new THREE.Mesh(new THREE.BoxGeometry(w,h,0.36),new THREE.MeshLambertMaterial({color:c}));bk.position.set(bx+w/2,r*1.5+0.5+h/2,0);g.add(bk);bx+=w+0.01;}}
+    g.position.set(x,0,-4); scene.add(g);
+  }
+  makeShelf(-6); makeShelf(6);
+
+  const desk=new THREE.Mesh(new THREE.BoxGeometry(3,0.1,1.5),new THREE.MeshLambertMaterial({color:0x160d04}));
+  desk.position.set(0,0.5,2); scene.add(desk);
+
+  const fb=[],fbc=[0x8b1a1a,0x1a4a8b,0x6a1a8b,0x1a8b3a,0x8b6a1a];
+  for(let i=0;i<8;i++){
+    const c=fbc[i%fbc.length],bk=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.06,0.7),new THREE.MeshLambertMaterial({color:c,emissive:c,emissiveIntensity:0.18}));
+    bk.position.set((Math.random()-0.5)*10,2+Math.random()*4,(Math.random()-0.5)*6-2);
+    bk.rotation.set(Math.random()*0.3,Math.random()*Math.PI*2,Math.random()*0.3);
+    scene.add(bk); fb.push({mesh:bk,sp:0.3+Math.random()*0.5,off:Math.random()*Math.PI*2,rs:(Math.random()-0.5)*0.005});
+  }
+
+  const candles=[];
+  for(let i=0;i<6;i++){
+    const cg=new THREE.Group();
+    cg.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.4,8),new THREE.MeshLambertMaterial({color:0xf0e8d0})));
+    const fl=new THREE.PointLight(0xffaa22,0.8,3); fl.position.y=0.3; cg.add(fl);
+    const fm2=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),new THREE.MeshLambertMaterial({color:0xffcc44,emissive:0xff8800,emissiveIntensity:1}));
+    fm2.position.y=0.3; cg.add(fm2);
+    const a=(i/6)*Math.PI*2;
+    cg.position.set(Math.cos(a)*4,2.5+Math.random()*2,Math.sin(a)*3-2);
+    scene.add(cg); candles.push({g:cg,l:fl,off:Math.random()*Math.PI*2});
+  }
+
+  const pg=new THREE.BufferGeometry(),pp=new Float32Array(200*3);
+  for(let i=0;i<200;i++){pp[i*3]=(Math.random()-0.5)*20;pp[i*3+1]=Math.random()*10;pp[i*3+2]=(Math.random()-0.5)*15;}
+  pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+  const pts=new THREE.Points(pg,new THREE.PointsMaterial({color:0x7c3aed,size:0.06,transparent:true,opacity:0.7}));
+  scene.add(pts);
+
+  const gg=new THREE.BufferGeometry(),gp=new Float32Array(80*3);
+  for(let i=0;i<80;i++){gp[i*3]=(Math.random()-0.5)*16;gp[i*3+1]=Math.random()*8;gp[i*3+2]=(Math.random()-0.5)*12;}
+  gg.setAttribute('position',new THREE.BufferAttribute(gp,3));
+  const gpts=new THREE.Points(gg,new THREE.PointsMaterial({color:0xf59e0b,size:0.05,transparent:true,opacity:0.5}));
+  scene.add(gpts);
+
+  const rrm=new THREE.MeshLambertMaterial({color:0x7c3aed,emissive:0x4a1d96,emissiveIntensity:0.8,side:THREE.DoubleSide});
+  const rr=new THREE.Mesh(new THREE.RingGeometry(2,2.05,64),rrm);
+  rr.rotation.x=-Math.PI/2; rr.position.set(0,-0.48,0); scene.add(rr);
+
+  const arch=new THREE.Mesh(new THREE.TorusGeometry(8,0.15,8,32,Math.PI),new THREE.MeshLambertMaterial({color:0x0d0820,emissive:0x1a0a40,emissiveIntensity:0.3}));
+  arch.rotation.set(Math.PI/2,0,0); arch.position.set(0,8,-4); scene.add(arch);
+
+  const clock=new THREE.Clock();
+  (function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    camera.position.set(Math.sin(t*0.08)*1.5,2+Math.sin(t*0.05)*0.5,12+Math.sin(t*0.06)*2);
+    camera.lookAt(Math.sin(t*0.05)*0.5,1+Math.sin(t*0.04)*0.3,0);
+    fb.forEach(b=>{b.mesh.position.y+=Math.sin(t*b.sp+b.off)*0.002;b.mesh.rotation.y+=b.rs;});
+    candles.forEach(c=>{c.l.intensity=0.5+0.5*Math.sin(t*8+c.off)*Math.random();});
+    pts.rotation.y=t*0.02; gpts.rotation.y=-t*0.015;
+    rrm.emissiveIntensity=0.4+0.4*Math.sin(t*1.5);
+    pL.intensity=2+Math.sin(t*0.8)*0.8; gL.intensity=1.5+Math.sin(t*1.1+1)*0.7;
+    renderer.render(scene,camera);
+  })();
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+})();
+
+/* ===== TYPING ANIMATION ===== */
+(function(){
+  const el=document.getElementById('typingText');
+  const phrases=['Aspiring Software Engineer','Competitive Programmer','Full Stack Developer','Problem Solver'];
+  let pi=0,ci=0,deleting=false;
+  function type(){
+    const phrase=phrases[pi];
+    el.textContent=(deleting?phrase.slice(0,ci--)+'|':phrase.slice(0,ci++)+'|');
+    if(!deleting&&ci>phrase.length){setTimeout(()=>{deleting=true;},1400);setTimeout(type,100);return;}
+    if(deleting&&ci<0){deleting=false;pi=(pi+1)%phrases.length;ci=0;}
+    setTimeout(type,deleting?45:80);
+  }
+  setTimeout(type,1800);
+})();
+
+/* ===== AMBIENT PARTICLES ===== */
+(function(){
+  const bg=document.getElementById('particles-bg');
+  const isMobile=window.innerWidth<640;
+  const count=isMobile?15:30;
+  const colors=['rgba(139,92,246,0.35)','rgba(245,158,11,0.25)','rgba(91,33,182,0.25)','rgba(196,181,253,0.15)'];
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const sz=2+Math.random()*4;
+    const dur=10+Math.random()*18,del=Math.random()*12;
+    p.style.cssText=`width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:${Math.random()*100}%;animation:particleDrift ${dur}s linear ${del}s infinite;`;
+    bg.appendChild(p);
+  }
+})();
+
+/* ===== SCROLL OBSERVER ===== */
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      // animate skill bars
+      e.target.querySelectorAll('.skill-fill').forEach(bar=>{
+        bar.style.width=bar.dataset.w+'%';
+      });
+    }
+  });
+},{threshold:0.12});
+document.querySelectorAll('.milestone,.trophy-card,.skill-category,.book-card').forEach(el=>obs.observe(el));
+
+/* ===== ACTIVE NAV ===== */
+const sections=document.querySelectorAll('section[id]');
+const navAs=document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{if(window.scrollY>=s.offsetTop-120)cur=s.id;});
+  navAs.forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+cur);});
+  document.getElementById('backTop').classList.toggle('show',window.scrollY>400);
+},{ passive:true });
+
+/* ===== MOBILE MENU ===== */
+function toggleMenu(){
+  document.getElementById('hamburger').classList.toggle('open');
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+function closeMenu(){
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('mobileMenu').classList.remove('open');
+}
+
+/* ===== PHOTO UPLOAD ===== */
+function handlePhoto(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=document.getElementById('photoImg');
+    img.src=ev.target.result;
+    img.style.display='block';
+    document.getElementById('photoPlaceholder').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ===== CONTACT FORM ===== */
+function submitForm(){
+  const n=document.getElementById('fname').value.trim();
+  const em=document.getElementById('femail').value.trim();
+  const ms=document.getElementById('fmsg').value.trim();
+  if(!n||!em||!ms){alert('Please fill all fields.');return;}
+  document.getElementById('successMsg').style.display='block';
+  document.querySelectorAll('.form-field').forEach(f=>{f.style.borderColor='rgba(245,158,11,0.4)';});
+  setTimeout(()=>{
+    document.querySelectorAll('.form-field').forEach(f=>{f.value='';f.style.borderColor='';});
+  },2500);
+}
+</script>
+</body>
+</html>
